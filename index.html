@@ -3,61 +3,84 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>謎解き脱出ゲーム</title>
+<title>クリック脱出ゲーム</title>
 <style>
-body{
-  margin:0; font-family:sans-serif;
-  background:#222; color:white;
-  display:flex; justify-content:center; align-items:center; height:100vh;
-}
-.game{
-  background:#333; padding:20px; border-radius:15px; width:300px; text-align:center;
-}
-button{
-  margin-top:10px; padding:8px 12px; border:none; border-radius:8px;
-  background:#ff6fa5; color:white; cursor:pointer;
-}
-input{padding:5px; border-radius:5px; border:none;}
+body{margin:0;font-family:sans-serif;background:#222;color:white;display:flex;justify-content:center;align-items:center;height:100vh;}
+.game{background:#333;padding:15px;border-radius:15px;width:360px;text-align:center;}
+.room{position:relative;width:100%;height:220px;background:#555;border-radius:10px;margin-bottom:10px;}
+.item{position:absolute;cursor:pointer;}
+#key{top:150px;left:50px;font-size:24px;}
+#box{top:120px;right:40px;font-size:30px;}
+#door{top:40px;left:130px;font-size:40px;}
+.inventory{margin-top:10px;font-size:14px;}
+button{margin-top:10px;padding:6px 10px;border:none;border-radius:8px;background:#ff6fa5;color:white;cursor:pointer;}
 </style>
 </head>
 <body>
-
-<div class="game" id="game">
-  <h2>🔒 脱出ゲーム</h2>
-  <p id="text">あなたは部屋に閉じ込められた…</p>
-  <input id="answer" placeholder="答えを入力">
-  <button onclick="check()">決定</button>
+<div class="game">
+  <h2>🔍 脱出ゲーム</h2>
+  <div class="room">
+    <div id="key" class="item">🔑</div>
+    <div id="box" class="item">📦</div>
+    <div id="door" class="item">🚪</div>
+  </div>
+  <p id="text">部屋を調べよう…</p>
+  <div class="inventory">持ち物：<span id="inv">なし</span></div>
+  <button onclick="reset()">リセット</button>
 </div>
 
 <script>
-let stage=0;
+let hasKey=false;
+let boxOpened=false;
 
-const texts=[
-"あなたは部屋に閉じ込められた…『1+1は？』",
-"ドアにメモがある…『赤＋青＝？（色で答えよ）』",
-"最後の鍵…『英語で“ねこ”は？』",
-"🔓 脱出成功！おめでとう！"
-];
+const text=document.getElementById("text");
+const inv=document.getElementById("inv");
 
-const answers=["2","むらさき","cat"];
-
-function check(){
-  const input=document.getElementById("answer").value.toLowerCase();
-
-  if(input===answers[stage]){
-    stage++;
-    document.getElementById("text").textContent=texts[stage];
-    document.getElementById("answer").value="";
-
-    if(stage===texts.length-1){
-      document.getElementById("answer").style.display="none";
-    }
-  }else{
-    alert("違うみたい…！");
+// 鍵クリック
+key.onclick=()=>{
+  if(!hasKey){
+    hasKey=true;
+    inv.textContent="鍵";
+    key.style.display="none";
+    text.textContent="鍵を手に入れた！";
   }
+};
+
+// 箱クリック
+box.onclick=()=>{
+  if(!boxOpened){
+    if(hasKey){
+      boxOpened=true;
+      text.textContent="箱を開けた！中にメモがある『1234』";
+    }else{
+      text.textContent="鍵がかかっている…";
+    }
+  }
+};
+
+// ドアクリック
+
+door.onclick=()=>{
+  if(!boxOpened){
+    text.textContent="暗証番号が必要だ…";
+    return;
+  }
+  const code=prompt("暗証番号を入力");
+  if(code==="1234"){
+    text.textContent="🔓 脱出成功！！おめでとう！";
+  }else{
+    text.textContent="違うみたい…";
+  }
+};
+
+function reset(){
+  hasKey=false;
+  boxOpened=false;
+  inv.textContent="なし";
+  key.style.display="block";
+  text.textContent="部屋を調べよう…";
 }
 </script>
-
 </body>
 </html>
 
