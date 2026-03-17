@@ -3,83 +3,111 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>クリック脱出ゲーム</title>
+<title>本格脱出ゲーム</title>
 <style>
 body{margin:0;font-family:sans-serif;background:#222;color:white;display:flex;justify-content:center;align-items:center;height:100vh;}
-.game{background:#333;padding:15px;border-radius:15px;width:360px;text-align:center;}
+.game{background:#333;padding:15px;border-radius:15px;width:380px;text-align:center;}
 .room{position:relative;width:100%;height:220px;background:#555;border-radius:10px;margin-bottom:10px;}
 .item{position:absolute;cursor:pointer;}
-#key{top:150px;left:50px;font-size:24px;}
-#box{top:120px;right:40px;font-size:30px;}
-#door{top:40px;left:130px;font-size:40px;}
-.inventory{margin-top:10px;font-size:14px;}
+.inventory{display:flex;justify-content:center;gap:10px;margin-top:10px;}
+.invItem{background:#444;padding:5px 10px;border-radius:8px;cursor:pointer;}
 button{margin-top:10px;padding:6px 10px;border:none;border-radius:8px;background:#ff6fa5;color:white;cursor:pointer;}
 </style>
 </head>
 <body>
 <div class="game">
-  <h2>🔍 脱出ゲーム</h2>
-  <div class="room">
-    <div id="key" class="item">🔑</div>
-    <div id="box" class="item">📦</div>
-    <div id="door" class="item">🚪</div>
-  </div>
+  <h2>🔍 本格脱出ゲーム</h2>
+  <div class="room" id="room"></div>
   <p id="text">部屋を調べよう…</p>
-  <div class="inventory">持ち物：<span id="inv">なし</span></div>
-  <button onclick="reset()">リセット</button>
+  <div>持ち物：</div>
+  <div class="inventory" id="inventory"></div>
+  <button onclick="prevRoom()">←</button>
+  <button onclick="nextRoom()">→</button>
 </div>
 
 <script>
-let hasKey=false;
-let boxOpened=false;
+let roomIndex=0;
+let inventory=[];
+let selectedItem=null;
 
 const text=document.getElementById("text");
-const inv=document.getElementById("inv");
+const room=document.getElementById("room");
+const invDiv=document.getElementById("inventory");
 
-// 鍵クリック
-key.onclick=()=>{
-  if(!hasKey){
-    hasKey=true;
-    inv.textContent="鍵";
-    key.style.display="none";
-    text.textContent="鍵を手に入れた！";
+function renderRoom(){
+  room.innerHTML="";
+
+  if(roomIndex===0){
+    addItem("🔑",50,150,()=>{
+      addToInventory("鍵");
+      text.textContent="鍵を手に入れた！";
+    });
   }
-};
 
-// 箱クリック
-box.onclick=()=>{
-  if(!boxOpened){
-    if(hasKey){
-      boxOpened=true;
-      text.textContent="箱を開けた！中にメモがある『1234』";
-    }else{
-      text.textContent="鍵がかかっている…";
-    }
+  if(roomIndex===1){
+    addItem("📦",200,140,()=>{
+      if(selectedItem==="鍵"){
+        addToInventory("メモ");
+        text.textContent="箱を開けた！メモを入手";
+      }else{
+        text.textContent="鍵が必要だ";
+      }
+    });
   }
-};
 
-// ドアクリック
+  if(roomIndex===2){
+    addItem("🖼",150,60,()=>{
+      text.textContent="絵の裏に『3 1 4 ?』と書いてある";
+    });
 
-door.onclick=()=>{
-  if(!boxOpened){
-    text.textContent="暗証番号が必要だ…";
-    return;
+    addItem("🚪",140,140,()=>{
+      if(!inventory.includes("メモ")){
+        text.textContent="ヒントが足りない…";
+        return;
+      }
+      const ans=prompt("暗証番号を入力");
+      if(ans==="3142"){
+        text.textContent="🎉 脱出成功！！";
+      }else{
+        text.textContent="違うみたい…";
+      }
+    });
   }
-  const code=prompt("暗証番号を入力");
-  if(code==="1234"){
-    text.textContent="🔓 脱出成功！！おめでとう！";
-  }else{
-    text.textContent="違うみたい…";
-  }
-};
-
-function reset(){
-  hasKey=false;
-  boxOpened=false;
-  inv.textContent="なし";
-  key.style.display="block";
-  text.textContent="部屋を調べよう…";
 }
+
+function addItem(icon,x,y,fn){
+  const el=document.createElement("div");
+  el.className="item";
+  el.style.left=x+"px";
+  el.style.top=y+"px";
+  el.textContent=icon;
+  el.onclick=fn;
+  room.appendChild(el);
+}
+
+function addToInventory(item){
+  if(!inventory.includes(item)) inventory.push(item);
+  renderInventory();
+}
+
+function renderInventory(){
+  invDiv.innerHTML="";
+  inventory.forEach(i=>{
+    const el=document.createElement("div");
+    el.className="invItem";
+    el.textContent=i;
+    el.onclick=()=>{
+      selectedItem=i;
+      text.textContent=i+"を選択中";
+    };
+    invDiv.appendChild(el);
+  });
+}
+
+function nextRoom(){ roomIndex=(roomIndex+1)%3; renderRoom(); }
+function prevRoom(){ roomIndex=(roomIndex+2)%3; renderRoom(); }
+
+renderRoom();
 </script>
 </body>
 </html>
