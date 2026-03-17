@@ -4,11 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>あおばの自己紹介</title>
+<link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru&display=swap" rel="stylesheet">
 <style>
 body{
   margin:0;
-  font-family: 'Arial', 'Hiragino Kaku Gothic ProN', sans-serif;
-  background: linear-gradient(180deg,#ffeef7,#e8f9ff);
+  font-family: 'Kiwi Maru', serif;
+  background: linear-gradient(135deg,#ffd6ec,#d6f0ff,#e6ffe6);
   display:flex;
   justify-content:center;
   align-items:center;
@@ -16,21 +17,29 @@ body{
 }
 
 .card{
-  background:white;
-  padding:40px;
-  width:340px;
-  border-radius:25px;
-  box-shadow:0 10px 25px rgba(0,0,0,0.1);
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: blur(10px);
+  padding:30px;
+  width:360px;
+  border-radius:30px;
+  box-shadow:0 15px 30px rgba(0,0,0,0.15);
   text-align:center;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float{
+  0%{transform: translateY(0px);} 
+  50%{transform: translateY(-10px);} 
+  100%{transform: translateY(0px);} 
 }
 
 .avatar{
-  font-size:70px;
+  font-size:80px;
 }
 
 h1{
-  color:#ff7fb0;
-  margin-bottom:5px;
+  color:#ff6fa5;
+  margin:10px 0 5px 0;
 }
 
 .subtitle{
@@ -39,16 +48,35 @@ h1{
 }
 
 .section{
-  background:#f8f8ff;
+  background:#ffffff;
   padding:12px;
-  border-radius:12px;
-  margin:10px 0;
+  border-radius:15px;
+  margin:12px 0;
+  box-shadow:0 5px 10px rgba(0,0,0,0.05);
 }
 
 .section h2{
-  font-size:16px;
-  margin:0 0 5px 0;
+  font-size:15px;
+  margin-bottom:5px;
   color:#6aa6ff;
+}
+
+.section p{
+  font-size:14px;
+}
+
+.badges{
+  margin-top:10px;
+}
+
+.badge{
+  display:inline-block;
+  background:#ffe0f0;
+  color:#ff6fa5;
+  padding:5px 10px;
+  border-radius:20px;
+  margin:3px;
+  font-size:12px;
 }
 
 .footer{
@@ -58,31 +86,38 @@ h1{
 }
 
 .heart{
-  color:#ff7fb0;
+  color:#ff6fa5;
 }
+
 </style>
 </head>
 <body>
 
 <div class="card">
 
-<div class="avatar">🌸</div>
+<div class="avatar">🧸</div>
 <h1>あおば</h1>
-<p class="subtitle">My Introduction Page</p>
+<p class="subtitle">Kawaii Profile Page 💕</p>
 
 <div class="section">
 <h2>🌷 趣味</h2>
-<p>ゲーム / 音楽 / 映画 など</p>
+<p>ゲーム / 音楽 / 映画</p>
 </div>
 
 <div class="section">
 <h2>⭐ 好きなもの</h2>
-<p>かわいいもの・おいしいもの</p>
+<p>かわいいもの / スイーツ / 友達と遊ぶこと</p>
 </div>
 
 <div class="section">
 <h2>📚 興味</h2>
-<p>英語・勉強・新しいことを学ぶこと</p>
+<p>英語 / 勉強 / 新しいことに挑戦</p>
+</div>
+
+<div class="badges">
+<span class="badge">#高校生</span>
+<span class="badge">#かわいい</span>
+<span class="badge">#楽しい</span>
 </div>
 
 <div class="footer">
@@ -93,3 +128,4 @@ Made with <span class="heart">❤</span> by Aoba
 
 </body>
 </html>
+
