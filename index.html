@@ -3,128 +3,123 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>あおばの自己紹介</title>
-<link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru&display=swap" rel="stylesheet">
+<title>あおばのパズルゲーム</title>
 <style>
 body{
   margin:0;
-  font-family: 'Kiwi Maru', serif;
-  background: linear-gradient(135deg,#ffd6ec,#d6f0ff,#e6ffe6);
+  font-family:sans-serif;
+  background: linear-gradient(135deg,#ffd6ec,#d6f0ff);
   display:flex;
   justify-content:center;
   align-items:center;
   height:100vh;
 }
 
-.card{
-  background: rgba(255,255,255,0.9);
-  backdrop-filter: blur(10px);
-  padding:30px;
-  width:360px;
-  border-radius:30px;
-  box-shadow:0 15px 30px rgba(0,0,0,0.15);
-  text-align:center;
-  animation: float 3s ease-in-out infinite;
-}
-
-@keyframes float{
-  0%{transform: translateY(0px);} 
-  50%{transform: translateY(-10px);} 
-  100%{transform: translateY(0px);} 
-}
-
-.avatar{
-  font-size:80px;
-}
-
-h1{
-  color:#ff6fa5;
-  margin:10px 0 5px 0;
-}
-
-.subtitle{
-  color:#888;
-  margin-bottom:20px;
-}
-
-.section{
-  background:#ffffff;
-  padding:12px;
-  border-radius:15px;
-  margin:12px 0;
-  box-shadow:0 5px 10px rgba(0,0,0,0.05);
-}
-
-.section h2{
-  font-size:15px;
-  margin-bottom:5px;
-  color:#6aa6ff;
-}
-
-.section p{
-  font-size:14px;
-}
-
-.badges{
-  margin-top:10px;
-}
-
-.badge{
-  display:inline-block;
-  background:#ffe0f0;
-  color:#ff6fa5;
-  padding:5px 10px;
+.game{
+  background:white;
+  padding:20px;
   border-radius:20px;
-  margin:3px;
-  font-size:12px;
+  text-align:center;
+  box-shadow:0 10px 20px rgba(0,0,0,0.15);
 }
 
-.footer{
+h1{color:#ff6fa5;}
+
+.grid{
+  display:grid;
+  grid-template-columns: repeat(4,70px);
+  gap:10px;
+  justify-content:center;
   margin-top:15px;
-  font-size:12px;
-  color:#999;
 }
 
-.heart{
-  color:#ff6fa5;
+.tile{
+  width:70px;
+  height:70px;
+  background:#ffe0f0;
+  border-radius:15px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-size:24px;
+  cursor:pointer;
+  transition:0.2s;
+}
+
+.tile:hover{
+  transform:scale(1.1);
+}
+
+.empty{
+  background:transparent;
+}
+
+button{
+  margin-top:10px;
+  padding:8px 15px;
+  border:none;
+  border-radius:10px;
+  background:#ff6fa5;
+  color:white;
+  cursor:pointer;
 }
 
 </style>
 </head>
 <body>
 
-<div class="card">
-
-<div class="avatar">🧸</div>
-<h1>あおば</h1>
-<p class="subtitle">Kawaii Profile Page 💕</p>
-
-<div class="section">
-<h2>🌷 趣味</h2>
-<p>ゲーム / 音楽 / 映画</p>
+<div class="game">
+<h1>🧩 かわいいパズル</h1>
+<p>タイルを動かして並べよう！</p>
+<div class="grid" id="grid"></div>
+<button onclick="shuffle()">シャッフル</button>
 </div>
 
-<div class="section">
-<h2>⭐ 好きなもの</h2>
-<p>かわいいもの / スイーツ / 友達と遊ぶこと</p>
-</div>
+<script>
+let tiles = [...Array(15).keys()].map(n=>n+1);
+tiles.push("");
 
-<div class="section">
-<h2>📚 興味</h2>
-<p>英語 / 料理 / 新しいことに挑戦</p>
-</div>
+const grid = document.getElementById("grid");
 
-<div class="badges">
-<span class="badge">#高校生</span>
-<span class="badge">#かわいい</span>
-<span class="badge">#楽しい</span>
-</div>
+function draw(){
+  grid.innerHTML="";
+  tiles.forEach((t,i)=>{
+    const div=document.createElement("div");
+    div.className="tile";
+    if(t==="") div.classList.add("empty");
+    div.textContent=t;
+    div.onclick=()=>move(i);
+    grid.appendChild(div);
+  });
+}
 
-<div class="footer">
-Made with <span class="heart">❤</span> by Aoba
-</div>
+function move(i){
+  const emptyIndex = tiles.indexOf("");
+  const canMove = [i-1,i+1,i-4,i+4];
+  if(canMove.includes(emptyIndex)){
+    [tiles[i],tiles[emptyIndex]]=[tiles[emptyIndex],tiles[i]];
+    draw();
+    checkWin();
+  }
+}
 
-</div>
+function shuffle(){
+  for(let i=tiles.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [tiles[i],tiles[j]]=[tiles[j],tiles[i]];
+  }
+  draw();
+}
+
+function checkWin(){
+  const win = [...Array(15).keys()].map(n=>n+1).concat("");
+  if(JSON.stringify(tiles)===JSON.stringify(win)){
+    setTimeout(()=>alert("クリア！🎉"),100);
+  }
+}
+
+shuffle();
+</script>
 
 </body>
 </html>
