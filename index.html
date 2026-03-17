@@ -2,32 +2,47 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
 <title>あおばの3マッチゲーム</title>
 <style>
-  body{
-    margin:0; font-family:sans-serif;
-    background: linear-gradient(135deg,#ffd6ec,#d6f0ff);
-    display:flex; justify-content:center; align-items:center; height:100vh;
-  }
-  .game{ background:white; padding:20px; border-radius:20px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.2);} 
-  h1{color:#ff6fa5; margin:5px 0;}
-  .score{margin-bottom:10px; color:#666;}
-  .grid{
-    display:grid; grid-template-columns:repeat(8,40px); gap:5px; justify-content:center;
-  }
-  .cell{
-    width:40px; height:40px; border-radius:10px;
-    display:flex; align-items:center; justify-content:center;
-    font-size:20px; cursor:pointer; transition:0.2s;
-  }
-  .cell:active{transform:scale(0.9);} 
+body{
+  margin:0; font-family:sans-serif;
+  background: linear-gradient(135deg,#ffd6ec,#d6f0ff);
+  display:flex; justify-content:center; align-items:center; height:100vh;
+}
+.game{
+  background:white; padding:15px; border-radius:20px; text-align:center;
+  box-shadow:0 10px 30px rgba(0,0,0,0.2);
+}
+h1{color:#ff6fa5; margin:5px 0;}
+.ui{display:flex; justify-content:space-between; margin-bottom:10px; font-size:14px;}
+.grid{
+  display:grid; grid-template-columns:repeat(8,40px); gap:5px;
+}
+.cell{
+  width:40px; height:40px; border-radius:10px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:20px; cursor:pointer; transition:0.2s;
+}
+.cell.pop{ animation: pop 0.3s; }
+@keyframes pop{ 0%{transform:scale(1);} 50%{transform:scale(1.4);} 100%{transform:scale(0);} }
+.cell:active{transform:scale(0.9);} 
+.bar{
+  height:8px; background:#eee; border-radius:5px; overflow:hidden; margin-top:5px;
+}
+.bar-inner{
+  height:100%; background:#ff6fa5; width:100%;
+}
 </style>
 </head>
 <body>
 <div class="game">
-  <h1>🍬 3マッチパズル</h1>
-  <div class="score">Score: <span id="score">0</span></div>
+  <h1>🍬 Match Puzzle</h1>
+  <div class="ui">
+    <div>Score: <span id="score">0</span></div>
+    <div>Time: <span id="time">60</span></div>
+  </div>
+  <div class="bar"><div class="bar-inner" id="timebar"></div></div>
   <div class="grid" id="grid"></div>
 </div>
 
@@ -37,21 +52,26 @@ const icons = ['🍓','🍋','🍇','🍊','🫐','🍒'];
 let board = [];
 let score = 0;
 let first = null;
+let time = 60;
+let timer;
 
 const grid = document.getElementById("grid");
 const scoreEl = document.getElementById("score");
+const timeEl = document.getElementById("time");
+const bar = document.getElementById("timebar");
 
 function randomIcon(){ return icons[Math.floor(Math.random()*icons.length)]; }
 
 function init(){
   board = Array.from({length: width*width}, randomIcon);
   draw();
+  startTimer();
 }
 
 function draw(){
-  grid.innerHTML = '';
+  grid.innerHTML='';
   board.forEach((v,i)=>{
-    const d = document.createElement('div');
+    const d=document.createElement('div');
     d.className='cell';
     d.textContent=v;
     d.onclick=()=>select(i);
@@ -60,12 +80,11 @@ function draw(){
 }
 
 function select(i){
+  if(time<=0) return;
   if(first===null){ first=i; return; }
   swap(first,i);
   if(checkMatches().length===0){ swap(first,i); }
-  else{
-    resolve();
-  }
+  else resolve();
   first=null;
 }
 
@@ -73,7 +92,6 @@ function swap(a,b){ [board[a],board[b]]=[board[b],board[a]]; draw(); }
 
 function checkMatches(){
   let matches=[];
-  // 横
   for(let r=0;r<width;r++){
     for(let c=0;c<width-2;c++){
       let i=r*width+c;
@@ -83,7 +101,6 @@ function checkMatches(){
       }
     }
   }
-  // 縦
   for(let c=0;c<width;c++){
     for(let r=0;r<width-2;r++){
       let i=r*width+c;
@@ -99,11 +116,19 @@ function checkMatches(){
 function resolve(){
   let matches = checkMatches();
   if(matches.length===0) return;
-  matches.forEach(i=>{ board[i]=''; });
-  score += matches.length * 10;
-  scoreEl.textContent = score;
-  drop();
-  setTimeout(()=>{ resolve(); draw(); },200);
+
+  matches.forEach(i=>{
+    const cell = grid.children[i];
+    if(cell) cell.classList.add('pop');
+  });
+
+  setTimeout(()=>{
+    matches.forEach(i=>board[i]='');
+    score += matches.length * 10;
+    scoreEl.textContent = score;
+    drop();
+    resolve();
+  },200);
 }
 
 function drop(){
@@ -119,6 +144,18 @@ function drop(){
     }
   }
   draw();
+}
+
+function startTimer(){
+  timer=setInterval(()=>{
+    time--;
+    timeEl.textContent=time;
+    bar.style.width=(time/60*100)+"%";
+    if(time<=0){
+      clearInterval(timer);
+      setTimeout(()=>alert("ゲーム終了！スコア: "+score),100);
+    }
+  },1000);
 }
 
 init();
