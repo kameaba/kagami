@@ -5,40 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>カーレース</title>
 <style>
-body {
-  margin: 0;
-  overflow: hidden;
-  background: #111;
-  font-family: sans-serif;
-}
-canvas {
-  display: block;
-  margin: auto;
-  background: linear-gradient(#444, #222);
-}
-#ui {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  color: white;
-  font-size: 18px;
-}
-#startBtn {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 10px 20px;
-  font-size: 18px;
-  background: #ff4757;
-  border: none;
-  border-radius: 10px;
-  color: white;
-}
+body { margin:0; overflow:hidden; background:#111; font-family:sans-serif; }
+canvas { display:block; margin:auto; background:#222; }
+#ui { position:absolute; top:10px; left:10px; color:white; font-size:18px; }
+#startBtn { position:absolute; bottom:20px; left:50%; transform:translateX(-50%); padding:12px 24px; font-size:18px; background:#ff4757; border:none; border-radius:10px; color:white; }
 </style>
 </head>
 <body>
-<div id="ui">スコア: <span id="score">0</span></div>
+<div id="ui">スコア: <span id="score">0</span> | スピード: <span id="spd">1</span></div>
 <button id="startBtn">スタート</button>
 <canvas id="gameCanvas"></canvas>
 
@@ -50,84 +24,96 @@ canvas.height = 600;
 
 let gameRunning = false;
 let score = 0;
-let speed = 4;
+let baseSpeed = 2;
+let speed = baseSpeed;
 
-const player = {
-  x: 180,
-  y: 500,
-  width: 40,
-  height: 60
-};
-
+const player = { x: 200, y: 520, width: 40, height: 60 };
 const enemies = [];
 
-function drawCar(x, y, color) {
-  ctx.fillStyle = color;
-  ctx.fillRect(x, y, 40, 60);
+// 簡易「画像」代わりのグラデーション車
+function drawCar(x, y, scale, color1, color2) {
+  const w = 40 * scale;
+  const h = 60 * scale;
+  const grad = ctx.createLinearGradient(x, y, x, y+h);
+  grad.addColorStop(0, color1);
+  grad.addColorStop(1, color2);
+  ctx.fillStyle = grad;
+  ctx.fillRect(x - w/2, y - h/2, w, h);
+  ctx.fillStyle = "white";
+  ctx.fillRect(x - w/4, y - h/4, w/2, h/4);
 }
 
 function spawnEnemy() {
-  const x = Math.random() * (canvas.width - 40);
-  enemies.push({ x: x, y: -60 });
+  const laneX = Math.random() * (canvas.width - 80) + 40;
+  enemies.push({ x: laneX, y: 0, z: 0 });
+}
+
+function drawRoad() {
+  ctx.fillStyle = "#333";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  // 3D風ライン
+  for (let i=0;i<20;i++) {
+    let y = (i*40 + Date.now()/20 % 40);
+    let scale = y / canvas.height;
+    let w = 10 * scale;
+    ctx.fillStyle = "white";
+    ctx.fillRect(canvas.width/2 - w/2, y, w, 20*scale);
+  }
 }
 
 function update() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  drawRoad();
 
-  // road lines
-  ctx.fillStyle = "white";
-  for (let i = 0; i < canvas.height; i += 40) {
-    ctx.fillRect(195, i + (Date.now()/10 % 40), 10, 20);
-  }
+  // プレイヤー（固定サイズ）
+  drawCar(player.x, player.y, 1, "#1e90ff", "#0b5ed7");
 
-  // player
-  drawCar(player.x, player.y, "#1e90ff");
-
-  // enemies
   for (let i = enemies.length - 1; i >= 0; i--) {
     let e = enemies[i];
     e.y += speed;
-    drawCar(e.x, e.y, "#ff3b3b");
 
-    // collision
+    let scale = e.y / canvas.height; // 奥→手前で大きく
+    drawCar(e.x, e.y, scale + 0.5, "#ff6b6b", "#c0392b");
+
+    // 当たり判定（簡易）
     if (
-      player.x < e.x + 40 &&
-      player.x + 40 > e.x &&
-      player.y < e.y + 60 &&
-      player.y + 60 > e.y
+      Math.abs(player.x - e.x) < 30 &&
+      Math.abs(player.y - e.y) < 40
     ) {
       gameRunning = false;
       alert("ゲームオーバー！スコア: " + score);
       location.reload();
     }
 
-    // remove off screen
     if (e.y > canvas.height) {
-      enemies.splice(i, 1);
+      enemies.splice(i,1);
       score++;
       document.getElementById("score").textContent = score;
+
+      // スピード徐々に上昇
+      speed = baseSpeed + score * 0.1;
+      document.getElementById("spd").textContent = speed.toFixed(1);
     }
   }
 
   if (gameRunning) requestAnimationFrame(update);
 }
 
-// controls (PC + スマホ対応)
-document.addEventListener("mousemove", (e) => {
+// 操作
+function movePlayer(clientX) {
   const rect = canvas.getBoundingClientRect();
-  player.x = e.clientX - rect.left - 20;
-});
+  player.x = clientX - rect.left;
+}
 
-document.addEventListener("touchmove", (e) => {
-  const rect = canvas.getBoundingClientRect();
-  player.x = e.touches[0].clientX - rect.left - 20;
-});
+document.addEventListener("mousemove", e => movePlayer(e.clientX));
+document.addEventListener("touchmove", e => movePlayer(e.touches[0].clientX));
 
-// start button
-document.getElementById("startBtn").onclick = () => {
+// スタート
+startBtn.onclick = () => {
   gameRunning = true;
-  document.getElementById("startBtn").style.display = "none";
-  setInterval(spawnEnemy, 1000);
+  startBtn.style.display = "none";
+  setInterval(spawnEnemy, 900);
   update();
 };
 </script>
