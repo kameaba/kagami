@@ -3,16 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>カーレース</title>
+<title>3D風カーレース（3車線）</title>
 <style>
 body { margin:0; overflow:hidden; background:#111; font-family:sans-serif; }
 canvas { display:block; margin:auto; background:#222; }
 #ui { position:absolute; top:10px; left:10px; color:white; font-size:18px; }
-#startBtn { position:absolute; bottom:20px; left:50%; transform:translateX(-50%); padding:12px 24px; font-size:18px; background:#ff4757; border:none; border-radius:10px; color:white; }
+#startBtn {
+  position:absolute; bottom:20px; left:50%;
+  transform:translateX(-50%);
+  padding:12px 24px; font-size:18px;
+  background:#ff4757; border:none;
+  border-radius:10px; color:white;
+}
 </style>
 </head>
 <body>
-<div id="ui">スコア: <span id="score">0</span> | スピード: <span id="spd">1</span></div>
+
+<div id="ui">
+  スコア: <span id="score">0</span> |
+  スピード: <span id="spd">1</span>
+</div>
+
 <button id="startBtn">スタート</button>
 <canvas id="gameCanvas"></canvas>
 
@@ -27,56 +38,90 @@ let score = 0;
 let baseSpeed = 2;
 let speed = baseSpeed;
 
-const player = { x: 200, y: 520, width: 40, height: 60 };
+// ===== 3車線 =====
+const lanes = [100, 200, 300];
+let currentLane = 1;
+
+const player = {
+  x: lanes[currentLane],
+  y: 520,
+  width: 40,
+  height: 60
+};
+
 const enemies = [];
 
-// 簡易「画像」代わりのグラデーション車
+// ===== 車描画 =====
 function drawCar(x, y, scale, color1, color2) {
   const w = 40 * scale;
   const h = 60 * scale;
-  const grad = ctx.createLinearGradient(x, y, x, y+h);
+
+  const grad = ctx.createLinearGradient(x, y, x, y + h);
   grad.addColorStop(0, color1);
   grad.addColorStop(1, color2);
+
   ctx.fillStyle = grad;
   ctx.fillRect(x - w/2, y - h/2, w, h);
+
+  // フロントガラス
   ctx.fillStyle = "white";
   ctx.fillRect(x - w/4, y - h/4, w/2, h/4);
 }
 
+// ===== 敵生成（レーン固定） =====
 function spawnEnemy() {
-  const laneX = Math.random() * (canvas.width - 80) + 40;
-  enemies.push({ x: laneX, y: 0, z: 0 });
+  const laneIndex = Math.floor(Math.random() * 3);
+  enemies.push({ x: lanes[laneIndex], y: 0 });
 }
 
+// ===== 道路描画 =====
 function drawRoad() {
   ctx.fillStyle = "#333";
-  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // 3D風ライン
-  for (let i=0;i<20;i++) {
-    let y = (i*40 + Date.now()/20 % 40);
+  // 中央ライン（動く）
+  for (let i = 0; i < 20; i++) {
+    let y = (i * 40 + Date.now() / 20 % 40);
     let scale = y / canvas.height;
     let w = 10 * scale;
+
     ctx.fillStyle = "white";
-    ctx.fillRect(canvas.width/2 - w/2, y, w, 20*scale);
+    ctx.fillRect(canvas.width / 2 - w / 2, y, w, 20 * scale);
   }
+
+  // 車線ライン
+  ctx.strokeStyle = "white";
+  ctx.setLineDash([20, 20]);
+
+  ctx.beginPath();
+  ctx.moveTo(canvas.width / 3, 0);
+  ctx.lineTo(canvas.width / 3, canvas.height);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(canvas.width * 2 / 3, 0);
+  ctx.lineTo(canvas.width * 2 / 3, canvas.height);
+  ctx.stroke();
+
+  ctx.setLineDash([]);
 }
 
+// ===== 更新 =====
 function update() {
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawRoad();
 
-  // プレイヤー（固定サイズ）
+  // プレイヤー
   drawCar(player.x, player.y, 1, "#1e90ff", "#0b5ed7");
 
   for (let i = enemies.length - 1; i >= 0; i--) {
     let e = enemies[i];
     e.y += speed;
 
-    let scale = e.y / canvas.height; // 奥→手前で大きく
+    let scale = e.y / canvas.height;
     drawCar(e.x, e.y, scale + 0.5, "#ff6b6b", "#c0392b");
 
-    // 当たり判定（簡易）
+    // 当たり判定
     if (
       Math.abs(player.x - e.x) < 30 &&
       Math.abs(player.y - e.y) < 40
@@ -86,12 +131,13 @@ function update() {
       location.reload();
     }
 
+    // 通過
     if (e.y > canvas.height) {
-      enemies.splice(i,1);
+      enemies.splice(i, 1);
       score++;
+
       document.getElementById("score").textContent = score;
 
-      // スピード徐々に上昇
       speed = baseSpeed + score * 0.1;
       document.getElementById("spd").textContent = speed.toFixed(1);
     }
@@ -100,23 +146,30 @@ function update() {
   if (gameRunning) requestAnimationFrame(update);
 }
 
-// 操作
+// ===== 操作（スワイプ風） =====
 function movePlayer(clientX) {
   const rect = canvas.getBoundingClientRect();
-  player.x = clientX - rect.left;
+  const x = clientX - rect.left;
+
+  if (x < canvas.width / 3) currentLane = 0;
+  else if (x < canvas.width * 2 / 3) currentLane = 1;
+  else currentLane = 2;
+
+  player.x = lanes[currentLane];
 }
 
 document.addEventListener("mousemove", e => movePlayer(e.clientX));
 document.addEventListener("touchmove", e => movePlayer(e.touches[0].clientX));
 
-// スタート
+// ===== スタート =====
 startBtn.onclick = () => {
   gameRunning = true;
   startBtn.style.display = "none";
+
   setInterval(spawnEnemy, 900);
   update();
 };
 </script>
+
 </body>
 </html>
-
